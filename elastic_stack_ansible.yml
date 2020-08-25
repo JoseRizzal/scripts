@@ -1,0 +1,120 @@
+---
+
+- name: Configure test multi node elastic stack
+  hosts: elastic_stack
+  become: True
+  tasks:
+    - name: 1. Install java basic
+      dnf: name=java-11-openjdk update_cache=yes
+
+    - name: 2. Install java develop
+      dnf: name=java-11-openjdk-devel update_cache=yes
+
+    - name: 3. Install firewall
+      dnf: name=firewalld update_cache=yes
+
+    - name: 4. Enable firewall
+      systemd: 
+        name: firewalld
+        enabled: yes
+        state: started
+        daemon_reload: yes
+
+    - name: 5. Enable rc-local for fedora 31
+      systemd: 
+        name: rc-local
+        enabled: yes
+        daemon_reload: yes
+
+    - name: 6. Adding elastic_repo 
+      copy: src=files/elasticsearch.repo dest=/etc/yum.repos.d/elasticsearch.repo
+
+    - name: 7. Install chkconfig (backward compatibility)
+      dnf: name=chkconfig update_cache=yes
+
+
+- name: Configure elasticsearch
+  hosts: elastic_search
+  become: True
+  tasks:
+
+    - name: 1. Install elasticsearch
+      dnf: name=elasticsearch update_cache=yes
+
+    - name: 2. Enable elasticsearch
+      systemd:
+        name: elasticsearch
+        enabled: yes
+        state: started
+        daemon_reload: yes
+
+    - name: 3. Open elasticsearch port
+      firewalld:
+        port: 9200/tcp
+        permanent: yes
+        state: enabled
+      notify: restart firewalld
+
+  handlers:
+  - name: restart firewalld
+    systemd: 
+      name: firewalld
+      state: restarted
+
+
+
+
+
+- name: Configure logstash
+  hosts: logstash
+  become: True
+  tasks:
+
+    - name: 1. Install logstash
+      dnf: name=logstash update_cache=yes
+
+    - name: 2. Enable logstash
+      systemd:
+        name: logstash
+        enabled: yes
+        state: started
+        daemon_reload: yes
+
+
+- name: Configure kibana
+  hosts: kibana
+  become: True
+  tasks:
+
+    - name: 1. Install kibana
+      dnf: name=kibana update_cache=yes
+
+    - name: 2. Add kibana config
+      copy: src=files/kibana.yml dest=/etc/kibana/kibana.yml
+      notify: restart kibana
+
+    - name: 3. Enable kibana
+      systemd:
+        name: kibana
+        enabled: yes
+        state: started
+        daemon_reload: yes
+
+    - name: 4. Open kibana port
+      firewalld:
+        port: 5601/tcp
+        permanent: yes
+        state: enabled
+      notify: restart firewalld
+
+  handlers:
+    - name: restart firewalld
+      systemd: 
+        name: firewalld
+        state: restarted
+
+    - name: restart kibana
+      systemd: 
+        name: kibana
+        state: restarted
+
