@@ -39,11 +39,11 @@ Options:
 
     --src=<host:port>, --source=<host:port>:
         Source host with optional port
-        Default is 10.2.16.5:5000 right now
+        Default is 10.10.10.10:5000 right now
 
     --dest=<host:port>, --destination=<host:port>:
         Destination host with optional port
-        Default is 10.2.16.5:5001 right now
+        Default is 10.10.10.10:5001 right now
 
     --log_mod=[parallel, file, console]:
         Set logging mode:
